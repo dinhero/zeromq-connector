@@ -1,4 +1,4 @@
-module Dominique_Upwork/Milestone1-ApiConnector
+module zeromq-connector
 
 go 1.16
 
