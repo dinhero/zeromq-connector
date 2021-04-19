@@ -17,6 +17,8 @@ package DWX_ZMQ_Reporting
 import (
 	"time"
 	api_connect "zeromq-connector/api/ZeroMQ_Connector"
+
+	dataframe "github.com/rocketlaunchr/dataframe-go"
 )
 
 type ZMQ_Reporting struct {
@@ -24,11 +26,11 @@ type ZMQ_Reporting struct {
 }
 
 func (r *ZMQ_Reporting) Init() {
-	r.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", map[string]interface{}{}, map[string]interface{}{}, true, 1000, 0.001, false)
+	r.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", nil, nil, true, 1000, 0.001, false)
 
 }
 
-func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak float64) map[string]interface{} {
+func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak float64) *dataframe.DataFrame {
 	// # Reset data output
 	r.Zmq.Set_response_(nil)
 	// # Get open trades from MetaTrader
@@ -51,10 +53,20 @@ func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak
 		_response := r.Zmq.Get_response_()
 
 		value, exists := _response["_trades"]
-		if exists && len(value) > 0 {
+		if exists && len(value.(map[string]interface{})) > 0 {
 
+			dataframe_data := dataframe.NewSeriesString("data", nil)
+			dataframe_index := dataframe.NewSeriesString("index", nil)
+			df := dataframe.NewDataFrame(dataframe_data, dataframe_index)
+
+			for key, value := range _response["_trades"].(map[string]interface{}) {
+				df.Append(nil, value.(string), key)
+			}
+
+			df.AddSeries(dataframe.NewSeriesString("_comment", nil, _trader), nil) //return _df[_df['_comment'] == _trader]
+			return df
 		}
 	}
-
-	return map[string]interface{}{}
+	// Default
+	return nil
 }
