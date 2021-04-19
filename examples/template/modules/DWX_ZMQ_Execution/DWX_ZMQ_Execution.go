@@ -26,14 +26,14 @@ type ZMQ_Execution struct {
 }
 
 func (exe *ZMQ_Execution) Init() {
-	exe.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", map[string]interface{}{}, map[string]interface{}{}, true, 1000, 0.001, false)
+	exe.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", nil, nil, true, 1000, 0.001, false)
 
 }
 
 func (exe *ZMQ_Execution) Execute(_exec_dict map[string]interface{}, _verbose bool, _delay float64, _wbreak float64) map[string]interface{} {
 	_check := ""
 	//# Reset thread data output
-	exe.Zmq.Set_response_(map[string]interface{}{})
+	exe.Zmq.Set_response_(nil)
 
 	//# OPEN TRADE
 	if _exec_dict["_action"] == "OPEN" {
