@@ -25,8 +25,33 @@ type ZMQ_Reporting struct {
 	Zmq api_connect.DWX_ZeroMQ_Connector
 }
 
-func (r *ZMQ_Reporting) Init() {
-	r.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", nil, nil, true, 1000, 0.001, false)
+func (r *ZMQ_Reporting) Init(ClientID string,
+	host string,
+	protocol string,
+	PUSH_PORT int,
+	PULL_PORT int,
+	SUB_PORT int,
+	delimiter string,
+	pulldata_handlers map[string]interface{},
+	subdata_handlers map[string]interface{},
+	verbose bool,
+	poll_timeout int,
+	sleep_delay float32,
+	monitor bool) {
+
+	r.Zmq.Initialize_Connector_Instance(ClientID,
+		host,
+		protocol,
+		PUSH_PORT,
+		PULL_PORT,
+		SUB_PORT,
+		delimiter,
+		pulldata_handlers,
+		subdata_handlers,
+		verbose,
+		poll_timeout,
+		sleep_delay,
+		monitor)
 
 }
 
