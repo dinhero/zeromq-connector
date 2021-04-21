@@ -462,9 +462,9 @@ func (p *DWX_ZeroMQ_Connector) DWX_MTX_SEND_HIST_REQUEST_(_symbol string,
 // Function to construct messages for sending TRACK_PRICES commands to
 // MetaTrader for real-time price updates
 // """_symbols=['EURUSD']
-func (p *DWX_ZeroMQ_Connector) DWX_MTX_SEND_TRACKPRICES_REQUEST_(_symbols []string) {
+func (p *DWX_ZeroMQ_Connector) DWX_MTX_SEND_TRACKPRICES_REQUEST_(_symbols map[string]interface{}) {
 	_msg := "TRACK_PRICES"
-	for _, s := range _symbols {
+	for s, _ := range _symbols {
 		_msg = _msg + ";" + s
 	}
 	//# Send via PUSH Socket
@@ -596,9 +596,12 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 
 							}
 							//invokes data handlers on pull port
-							for _, hnd := range p.Pulldata_handlers {
-								fmt.Println(hnd)
-								hnd.onPullData(_data)
+							for index, hnd := range p.Pulldata_handlers {
+								//fmt.Println(hnd)
+								if index == "OnPullData" {
+									_data_string, _ := json.Marshal(_data)
+									hnd.(func(string))(string(_data_string)) //.onPullData(_data)
+								}
 							}
 							p.Thread_data_output = _data
 							if p.Verbose {
@@ -661,8 +664,10 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 							p.Market_Data_DB[_data[0]].(map[string]interface{})[_timestamp.String()] = map[string]interface{}{"_time": _time_float, "_open": _open_float, "_high": _high_float, "_low": _low_float, "_close": _close_float, "_tick_vol": _tick_vol_float, "_spread": _spread_float, "_real_vol": _real_vol_float}
 
 						}
-						for _, hnd := range p.Subdata_handlers {
-							hnd.onSubData(msg)
+						for index, hnd := range p.Subdata_handlers {
+							if index == "OnSubData" {
+								hnd.(func(string))(msg) //onSubData(msg)
+							}
 						}
 					}
 				} else {
@@ -760,7 +765,7 @@ func (p *DWX_ZeroMQ_Connector) Valid_response_(_input string) bool {
 }
 func (p *DWX_ZeroMQ_Connector) Remote_recv(_socket *zmq.Socket) string {
 	if p.PULL_SOCKET_STATUS["state"] == true {
-		msg, err := _socket.Recv(zmq.DONTWAIT)
+		msg, err := _socket.Recv(zmq.Flag(zmq.DONTWAIT))
 		if err == nil {
 			return msg
 		} else {

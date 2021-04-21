@@ -16,14 +16,15 @@ package DWX_ZMQ_Strategy
 // """
 
 import (
+	api_connect "zeromq-connector/api/ZeroMQ_Connector"
 	execution "zeromq-connector/examples/template/modules/DWX_ZMQ_Execution"
 	reporting "zeromq-connector/examples/template/modules/DWX_ZMQ_Reporting"
 )
 
 type ZMQ_Strategy struct {
-	// Zmq               api_connect.DWX_ZeroMQ_Connector
+	Zmq               api_connect.DWX_ZeroMQ_Connector
 	Name              string                 //# Name
-	Symbols           map[string]float32     //# List of (Symbol,Lotsize) tuples
+	Symbols           map[string]interface{} //# List of (Symbol,Lotsize) tuples
 	Broker_gmt        int                    // # Darwinex GMT offset
 	Pulldata_handlers map[string]interface{} //# Handlers to process data received through PULL port.
 	Subdata_handlers  map[string]interface{} //# Handlers to process data received through SUB port.
@@ -33,7 +34,7 @@ type ZMQ_Strategy struct {
 }
 
 func (b *ZMQ_Strategy) Init(_name string,
-	_symbols map[string]float32,
+	_symbols map[string]interface{},
 	_broker_gmt int,
 	_pulldata_handlers map[string]interface{},
 	_subdata_handlers map[string]interface{},
@@ -44,7 +45,7 @@ func (b *ZMQ_Strategy) Init(_name string,
 	b.Broker_gmt = _broker_gmt
 
 	// # Not entirely necessary here.
-	// b.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", _pulldata_handlers, _subdata_handlers, _verbose, 1000, 0.001, false)
+	b.Zmq.Initialize_Connector_Instance("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", _pulldata_handlers, _subdata_handlers, _verbose, 1000, 0.001, false)
 
 	// Modules
 	b.Execution.Init("dwx-zeromq", "localhost", "tcp", 32768, 32769, 32770, ";", _pulldata_handlers, _subdata_handlers, _verbose, 1000, 0.001, false)
