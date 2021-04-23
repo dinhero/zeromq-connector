@@ -138,17 +138,17 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 	p.SUB_PORT = SUB_PORT
 
 	// Create Sockets
-	p.PUSH_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.PUSH)
+	p.PUSH_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.PUSH))
 	p.PUSH_SOCKET.SetSndhwm(1)
 	p.PUSH_SOCKET_STATUS["state"] = true
 	p.PUSH_SOCKET_STATUS["latest_event"] = "N/A"
 
-	p.PULL_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.PULL)
+	p.PULL_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.PULL))
 	p.PULL_SOCKET.SetRcvhwm(1)
 	p.PULL_SOCKET_STATUS["state"] = true
 	p.PULL_SOCKET_STATUS["latest_event"] = "N/A"
 
-	p.SUB_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.SUB)
+	p.SUB_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.SUB))
 
 	// Bind PUSH Socket to send commands to MetaTrader
 	p.PUSH_SOCKET.Connect(p.URL + strconv.Itoa(p.PUSH_PORT))
@@ -164,8 +164,8 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 
 	// Initialize POLL set and register PULL and SUB sockets
 	p.Poller = zmq.NewPoller()
-	p.Poller.Add(p.PULL_SOCKET, zmq.POLLIN)
-	p.Poller.Add(p.SUB_SOCKET, zmq.POLLIN)
+	p.Poller.Add(p.PULL_SOCKET, zmq.State(zmq.POLLIN))
+	p.Poller.Add(p.SUB_SOCKET, zmq.State(zmq.POLLIN))
 
 	// Start listening for responses to commands and new market data
 	p.String_delimiter = delimiter
@@ -189,7 +189,7 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 	p.Temp_order_dict = p.Generate_default_order_dict()
 
 	// Thread returns the most recently received DATA block here
-	p.Thread_data_output = map[string]interface{}{}
+	p.Thread_data_output = nil
 
 	// Verbosity
 	p.Verbose = verbose
@@ -278,10 +278,10 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_SHUTDOWN_() {
 	//    # Unregister sockets from Poller
 	p.Poller.RemoveBySocket(p.PULL_SOCKET)
 	p.Poller.RemoveBySocket(p.SUB_SOCKET)
-	fmt.Println("\n++ [KERNEL] Sockets unregistered from ZMQ Poller()! ++")
+	fmt.Println("++ [KERNEL] Sockets unregistered from ZMQ Poller()! ++")
 	//   # Terminate context
 	p.ZMQ_CONTEXT.Term()
-	fmt.Println("\n++ [KERNEL] ZeroMQ Context Terminated.. shut down safely complete! :)")
+	fmt.Println("++ [KERNEL] ZeroMQ Context Terminated.. shut down safely complete! :)")
 
 	//##########################################################################
 }
@@ -304,7 +304,7 @@ func (p *DWX_ZeroMQ_Connector) SetStatus(_new_status bool) {
 func (p *DWX_ZeroMQ_Connector) Remote_send(_socket *zmq.Socket, _data string) {
 
 	if p.PUSH_SOCKET_STATUS["state"] == "True" {
-		_, err := _socket.Send(_data, zmq.DONTWAIT)
+		_, err := _socket.Send(_data, zmq.Flag(zmq.DONTWAIT))
 		if err != nil {
 			// catch: zmq.Error()//zmq.error.Again:
 			fmt.Println("Resource timeout.. please try again.")
@@ -570,7 +570,7 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 		sockets, _ := p.Poller.Poll(time.Duration(poll_timeout))
 		for _, socket := range sockets {
 			// Process response to commands sent to MetaTrader
-			if (socket.Socket == p.PULL_SOCKET) && (socket.Events == zmq.POLLIN) {
+			if (socket.Socket == p.PULL_SOCKET) && (socket.Events == zmq.State(zmq.POLLIN)) {
 				if p.PULL_SOCKET_STATUS["state"] == true {
 					//msg = p.PULL_SOCKET.recv_string(zmq.DONTWAIT)
 					msg := p.Remote_recv(p.PULL_SOCKET)
@@ -616,8 +616,8 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 					fmt.Println("[KERNEL] NO HANDSHAKE on PULL SOCKET.. Cannot READ data.")
 				}
 			}
-			if (socket.Socket == p.SUB_SOCKET) && (socket.Events == zmq.POLLIN) {
-				msg, err := p.SUB_SOCKET.Recv(zmq.DONTWAIT)
+			if (socket.Socket == p.SUB_SOCKET) && (socket.Events == zmq.State(zmq.POLLIN)) {
+				msg, err := p.SUB_SOCKET.Recv(zmq.Flag(zmq.DONTWAIT))
 				if err == nil {
 					if msg != "" {
 						_timestamp := time.Now().UTC()
@@ -705,8 +705,10 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_EVENT_MONITOR_(socket_name string, monito
 		time.Sleep(time.Second * time.Duration(p.Sleep_delay))
 		for true {
 			var evt map[string]interface{}
-			evt = recv_monitor_message(monitor_socket, zmq.DONTWAIT)
-			evt["description"] = p.MONITOR_EVENT_MAP[evt["event"].(int)]
+			_, _, evtValue, _ := monitor_socket.RecvEvent(zmq.Flag(zmq.DONTWAIT))
+			//evt = recv_monitor_message(monitor_socket, zmq.DONTWAIT)
+			evt["description"] = p.MONITOR_EVENT_MAP[evtValue]
+			evt["event"] = evtValue
 
 			//# print(f"\r[{socket_name} Socket] >> {evt['description']}", end='', flush=True)
 			fmt.Println("[" + socket_name + "} Socket] >> {" + evt["description"].(string) + "}")
@@ -750,6 +752,7 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_EVENT_MONITOR_(socket_name string, monito
 	fmt.Println("++ [KERNEL] " + socket_name + " _DWX_ZMQ_EVENT_MONITOR_() Signing Out ++")
 }
 func (p *DWX_ZeroMQ_Connector) Valid_response_(_input string) bool {
+
 	return true
 	// //# Valid data types
 	// _types = (dict,DataFrame)
