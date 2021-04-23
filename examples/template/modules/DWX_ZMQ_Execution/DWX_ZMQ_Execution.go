@@ -78,7 +78,7 @@ func (exe *ZMQ_Execution) Execute(_exec_dict map[string]interface{}, _verbose bo
 	_ws := time.Now().Unix()
 
 	// # While data not received, sleep until timeout
-	for !exe.Zmq.Valid_response_("zmq") {
+	for !exe.Zmq.Valid_response_(map[string]interface{}{"zmq": "zmq"}) {
 		// 	sleep(_delay)
 		time.Sleep(time.Duration(_delay))
 
@@ -88,7 +88,7 @@ func (exe *ZMQ_Execution) Execute(_exec_dict map[string]interface{}, _verbose bo
 
 	}
 	// # If data received, return DataFrame
-	if exe.Zmq.Valid_response_("zmq") {
+	if exe.Zmq.Valid_response_(map[string]interface{}{"zmq": "zmq"}) {
 		_, exists := exe.Zmq.Get_response_()[_check]
 		if exists {
 			return exe.Zmq.Get_response_()

@@ -2,6 +2,7 @@ package coin_flip_traders
 
 import (
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 	strategy_base "zeromq-connector/examples/template/strategies/base/DWX_ZMQ_Strategy"
@@ -134,8 +135,35 @@ func (c *COIN_FLIP_TRADERS) Trader_(_symbol string, _symbolValue interface{}, _m
 		_ot := c.base.Reporting.Get_open_trades_(_symbol+"_Trader", float64(c.Delay), 10)
 
 		// # Reset cycle if nothing received
-		if !c.base.Zmq.Valid_response_(_ot.String()) {
+		if !c.base.Zmq.Valid_response_(_ot) {
 			continue
+		}
+
+		for row := 0; row < len(_ot["index"].([]interface{})); row++ {
+			value := time.Now().Unix() + (int64(c.base.Broker_gmt) * 3600) - _ot["_open_time"].([]interface{})[row].(int64)
+			if abs(value) > int64(c.Close_t_delta) {
+				_ret := c.base.Execution.Execute(
+					map[string]interface{}{
+						"_action":  "CLOSE",
+						"_ticket":  row,
+						"_comment": _symbol + "_Trader"}, c.Verbose, float64(c.Delay), 10)
+
+				if c.base.Zmq.Valid_response_(_ret) == false {
+					break
+				}
+				time.Sleep(time.Duration(c.Delay))
+			}
+
+		}
+
+		if len(_ot["index"].([]interface{})) < _max_trades {
+			_default_order["_type"] = rand.Intn(1-0) + 0
+
+			_ret := c.base.Execution.Execute(_default_order, c.Verbose, float64(c.Delay), 10)
+
+			if c.base.Zmq.Valid_response_(_ret) == false {
+				break
+			}
 		}
 
 	}
@@ -148,7 +176,7 @@ func (c *COIN_FLIP_TRADERS) Stop_() {
 	c.Market_open = false
 
 	//Join all threads to main thread from doing anything
-	for index, _ := range c.Traders {
+	for index := range c.Traders {
 
 		//# Setting _market_open to False will stop each "trader" thread
 		//# from doing anything more. So wait for them to finish.
@@ -189,3 +217,9 @@ func (c *COIN_FLIP_TRADERS) Stop_() {
 // #     sleep(10)
 // #     print('Stopping and closing all positions again...')
 // #     example._stop_()
+func abs(value int64) int64 {
+	if value < 0 {
+		return value * -1
+	}
+	return value
+}

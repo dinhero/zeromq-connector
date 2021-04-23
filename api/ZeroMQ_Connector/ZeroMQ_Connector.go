@@ -464,7 +464,7 @@ func (p *DWX_ZeroMQ_Connector) DWX_MTX_SEND_HIST_REQUEST_(_symbol string,
 // """_symbols=['EURUSD']
 func (p *DWX_ZeroMQ_Connector) DWX_MTX_SEND_TRACKPRICES_REQUEST_(_symbols map[string]interface{}) {
 	_msg := "TRACK_PRICES"
-	for s, _ := range _symbols {
+	for s := range _symbols {
 		_msg = _msg + ";" + s
 	}
 	//# Send via PUSH Socket
@@ -751,21 +751,47 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_EVENT_MONITOR_(socket_name string, monito
 
 	fmt.Println("++ [KERNEL] " + socket_name + " _DWX_ZMQ_EVENT_MONITOR_() Signing Out ++")
 }
-func (p *DWX_ZeroMQ_Connector) Valid_response_(_input string) bool {
+func (p *DWX_ZeroMQ_Connector) Valid_response_(_input map[string]interface{}) bool {
 
-	return true
-	// //# Valid data types
-	// _types = (dict,DataFrame)
-
-	// //# If _input = 'zmq', assume self._zmq._thread_data_output
-	// if isinstance(_input, str) and _input == 'zmq':
-	//     return isinstance(self._get_response_(), _types)
-	// else:
-	//     return isinstance(_input, _types)
-
-	// //# Default
-	// return False
+	if _input["zmq"] == "zmq" {
+		return isInstance(p.Get_response_())
+	} else {
+		return isInstance(_input)
+	}
 }
+func isInstance(input map[string]interface{}) bool {
+	return true
+}
+
+// func isinstance() bool {
+// 	array := []string{"bool",
+// 		"int",
+// 		"int8",
+// 		"int16",
+// 		"int32",
+// 		"int64",
+// 		"uint",
+// 		"uint8",
+// 		"uint16",
+// 		"uint32",
+// 		"uint64",
+// 		"uintptr",
+// 		"float32",
+// 		"float64",
+// 		"complex64",
+// 		"complex128",
+// 		"array",
+// 		"chan",
+// 		"func",
+// 		"interface",
+// 		"map",
+// 		"ptr",
+// 		"slice",
+// 		"string",
+// 		"struct",
+// 		"unsafePointer"}
+// 	return false
+// }
 func (p *DWX_ZeroMQ_Connector) Remote_recv(_socket *zmq.Socket) string {
 	if p.PULL_SOCKET_STATUS["state"] == true {
 		msg, err := _socket.Recv(zmq.Flag(zmq.DONTWAIT))

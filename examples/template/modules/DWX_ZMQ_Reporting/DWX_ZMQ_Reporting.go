@@ -17,8 +17,6 @@ package DWX_ZMQ_Reporting
 import (
 	"time"
 	api_connect "zeromq-connector/api/ZeroMQ_Connector"
-
-	dataframe "github.com/rocketlaunchr/dataframe-go"
 )
 
 type ZMQ_Reporting struct {
@@ -55,7 +53,7 @@ func (r *ZMQ_Reporting) Init(ClientID string,
 
 }
 
-func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak float64) *dataframe.DataFrame {
+func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak float64) map[string]interface{} {
 	// # Reset data output
 	r.Zmq.Set_response_(nil)
 	// # Get open trades from MetaTrader
@@ -64,7 +62,7 @@ func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak
 	_ws := time.Now().Unix()
 
 	// # While data not received, sleep until timeout
-	for !r.Zmq.Valid_response_("zmq") {
+	for !r.Zmq.Valid_response_(map[string]interface{}{"zmq": "zmq"}) {
 
 		time.Sleep(time.Duration(_delay))
 
@@ -74,21 +72,22 @@ func (r *ZMQ_Reporting) Get_open_trades_(_trader string, _delay float64, _wbreak
 	}
 
 	// # If data received, return DataFrame
-	if r.Zmq.Valid_response_("zmq") {
+	if r.Zmq.Valid_response_(map[string]interface{}{"zmq": "zmq"}) {
 		_response := r.Zmq.Get_response_()
 
 		value, exists := _response["_trades"]
 		if exists && len(value.(map[string]interface{})) > 0 {
-
-			dataframe_data := dataframe.NewSeriesString("data", nil)
-			dataframe_index := dataframe.NewSeriesString("index", nil)
-			df := dataframe.NewDataFrame(dataframe_data, dataframe_index)
+			var df map[string]interface{}
+			df["data"] = []interface{}{}
+			df["index"] = []interface{}{}
 
 			for key, value := range _response["_trades"].(map[string]interface{}) {
-				df.Append(nil, value.(string), key)
+				df["data"] = append(df["data"].([]interface{}), value)
+				df["index"] = append(df["index"].([]interface{}), key)
+				//df.Append(nil, value.(string), key)
 			}
 
-			df.AddSeries(dataframe.NewSeriesString("_comment", nil, _trader), nil) //return _df[_df['_comment'] == _trader]
+			df["_comment"] = _trader
 			return df
 		}
 	}
