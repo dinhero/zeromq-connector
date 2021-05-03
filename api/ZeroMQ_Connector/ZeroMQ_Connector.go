@@ -23,6 +23,7 @@ import (
 	"time"
 
 	//"runtime"
+
 	zmq "github.com/pebbe/zmq4"
 )
 
@@ -87,7 +88,6 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 	monitor bool) *DWX_ZeroMQ_Connector {
 
 	// p := new(DWX_ZeroMQ_Connector)
-
 	if ClientID == "" {
 		ClientID = "dwx-zeromq"
 	}
@@ -140,11 +140,13 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 	// Create Sockets
 	p.PUSH_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.PUSH))
 	p.PUSH_SOCKET.SetSndhwm(1)
+	p.PUSH_SOCKET_STATUS = map[string]interface{}{}
 	p.PUSH_SOCKET_STATUS["state"] = true
 	p.PUSH_SOCKET_STATUS["latest_event"] = "N/A"
 
 	p.PULL_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.PULL))
 	p.PULL_SOCKET.SetRcvhwm(1)
+	p.PULL_SOCKET_STATUS = map[string]interface{}{}
 	p.PULL_SOCKET_STATUS["state"] = true
 	p.PULL_SOCKET_STATUS["latest_event"] = "N/A"
 
