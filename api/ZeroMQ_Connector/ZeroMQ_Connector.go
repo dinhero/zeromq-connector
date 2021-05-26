@@ -95,7 +95,7 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 		host = "localhost"
 	}
 	if protocol == "" {
-		host = "tcp"
+		protocol = "tcp"
 	}
 	if PUSH_PORT == 0 {
 		PUSH_PORT = 32768
@@ -153,17 +153,25 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 	p.SUB_SOCKET, _ = p.ZMQ_CONTEXT.NewSocket(zmq.Type(zmq.SUB))
 
 	// Bind PUSH Socket to send commands to MetaTrader
-	p.PUSH_SOCKET.Connect(p.URL + strconv.Itoa(p.PUSH_PORT))
+	err := p.PUSH_SOCKET.Connect(p.URL + strconv.Itoa(p.PUSH_PORT))
+	if err != nil {
+		fmt.Println("ERROR while connecting PUSH_SOCKET to URL: " + p.URL + " on PORT: " + strconv.Itoa(p.PUSH_PORT))
+	}
 	fmt.Println("[INIT] Ready to send commands to METATRADER (PUSH): " + strconv.Itoa(p.PUSH_PORT))
 
 	// Connect PULL Socket to receive command responses from MetaTrader
-	p.PULL_SOCKET.Connect(p.URL + strconv.Itoa(p.PULL_PORT))
+	err = p.PULL_SOCKET.Connect(p.URL + strconv.Itoa(p.PULL_PORT))
+	if err != nil {
+		fmt.Println("ERROR while connecting PULL_SOCKET to URL: " + p.URL + " on PORT: " + strconv.Itoa(p.PULL_PORT))
+	}
 	fmt.Println("[INIT] Listening for responses from METATRADER (PULL): " + strconv.Itoa(p.PULL_PORT))
 
 	// Connect SUB Socket to receive market data from MetaTrader
 	fmt.Println("[INIT] Listening for market data from METATRADER (SUB): " + strconv.Itoa(p.SUB_PORT))
 	p.SUB_SOCKET.Connect(p.URL + strconv.Itoa(p.SUB_PORT))
-
+	if err != nil {
+		fmt.Println("ERROR while connecting SUB_SOCKET to URL: " + p.URL + " on PORT: " + strconv.Itoa(p.SUB_PORT))
+	}
 	// Initialize POLL set and register PULL and SUB sockets
 	p.Poller = zmq.NewPoller()
 	p.Poller.Add(p.PULL_SOCKET, zmq.State(zmq.POLLIN))
