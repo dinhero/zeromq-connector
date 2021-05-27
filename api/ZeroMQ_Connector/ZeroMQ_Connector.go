@@ -284,12 +284,12 @@ func (p *DWX_ZeroMQ_Connector) Initialize_Connector_Instance(ClientID string,
 func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_SHUTDOWN_() {
 	//# Set INACTIVE
 	p.ACTIVE = false
+
 	p.MarketData_Thread_Wait = false
-	p.MarketData_Thread_WG.Done()
-	// Socket Monitor Threads
 	p.PUSH_Monitor_Thread_Wait = false
-	p.PUSH_Monitor_Thread_WG.Done()
 	p.PULL_Monitor_Thread_Wait = false
+	p.MarketData_Thread_WG.Done()
+	p.PUSH_Monitor_Thread_WG.Done()
 	p.PULL_Monitor_Thread_WG.Done()
 
 	//    # Unregister sockets from Poller
@@ -573,6 +573,7 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 	poll_timeout int) { //=1000
 	defer func() {
 		if p.MarketData_Thread_Wait {
+			p.MarketData_Thread_Wait = false
 			p.MarketData_Thread_WG.Done()
 		}
 	}()
@@ -697,9 +698,11 @@ func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_Poll_Data_(string_delimiter string,
 func (p *DWX_ZeroMQ_Connector) DWX_ZMQ_EVENT_MONITOR_(socket_name string, monitor_socket *zmq.Socket) {
 	defer func() {
 		if socket_name == "PULL" && p.PULL_Monitor_Thread_Wait {
+			p.PULL_Monitor_Thread_Wait = false
 			p.PULL_Monitor_Thread_WG.Done()
 
 		} else if socket_name == "PUSH" && p.PUSH_Monitor_Thread_Wait {
+			p.PUSH_Monitor_Thread_Wait = false
 			p.PUSH_Monitor_Thread_WG.Done()
 
 		}
