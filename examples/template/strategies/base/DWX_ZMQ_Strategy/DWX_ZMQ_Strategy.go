@@ -16,9 +16,11 @@ package DWX_ZMQ_Strategy
 // """
 
 import (
-	api_connect "zeromq-connector/api/ZeroMQ_Connector"
-	execution "zeromq-connector/examples/template/modules/DWX_ZMQ_Execution"
-	reporting "zeromq-connector/examples/template/modules/DWX_ZMQ_Reporting"
+	execution "github.com/dinhero/zeromq-connector/examples/template/modules/DWX_ZMQ_Execution"
+
+	reporting "github.com/dinhero/zeromq-connector/examples/template/modules/DWX_ZMQ_Reporting"
+
+	api_connect "github.com/dinhero/zeromq-connector/api/ZeroMQ_Connector"
 )
 
 type ZMQ_Strategy struct {

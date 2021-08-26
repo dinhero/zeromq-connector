@@ -1,7 +1,7 @@
 package main
 
 import (
-	api_connect "zeromq-connector/api/ZeroMQ_Connector"
+	api_connect "github.com/dinhero/zeromq-connector/api/ZeroMQ_Connector"
 )
 
 func main() {

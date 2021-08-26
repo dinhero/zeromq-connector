@@ -1,4 +1,4 @@
-module zeromq-connector
+module github.com/dinhero/zeromq-connector
 
 go 1.16
 

@@ -16,7 +16,8 @@ package DWX_ZMQ_Reporting
 // """
 import (
 	"time"
-	api_connect "zeromq-connector/api/ZeroMQ_Connector"
+
+	api_connect "github.com/dinhero/zeromq-connector/api/ZeroMQ_Connector"
 )
 
 type ZMQ_Reporting struct {

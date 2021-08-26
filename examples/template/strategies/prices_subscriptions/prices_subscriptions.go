@@ -6,7 +6,8 @@ import (
 	"strings"
 	"sync"
 	"time"
-	strategy_base "zeromq-connector/examples/template/strategies/base/DWX_ZMQ_Strategy"
+
+	strategy_base "github.com/dinhero/zeromq-connector/examples/template/strategies/base/DWX_ZMQ_Strategy"
 )
 
 type Prices_subscriptions struct {

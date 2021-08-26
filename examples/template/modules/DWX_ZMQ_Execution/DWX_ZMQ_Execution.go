@@ -3,7 +3,8 @@ package DWX_ZMQ_Execution
 import (
 	"encoding/json"
 	"time"
-	api_connect "zeromq-connector/api/ZeroMQ_Connector"
+
+	api_connect "github.com/dinhero/zeromq-connector/api/ZeroMQ_Connector"
 )
 
 // # -*- coding: utf-8 -*-
